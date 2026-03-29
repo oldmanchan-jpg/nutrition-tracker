@@ -53,7 +53,14 @@ export default function Dashboard() {
 
   const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack']
 
-  const today = new Date().toLocaleDateString('en-US', {
+  const mealTypeLabels: Record<string, string> = {
+    breakfast: 'Colazione',
+    lunch: 'Pranzo',
+    dinner: 'Cena',
+    snack: 'Spuntino',
+  }
+
+  const today = new Date().toLocaleDateString('it-IT', {
     weekday: 'long',
     month: 'long',
     day: 'numeric',
@@ -79,26 +86,26 @@ export default function Dashboard() {
         {goal ? (
           <div className="flex justify-center gap-4 mb-8">
             <MacroRing
-              label="Calories"
+              label="Calorie"
               current={Math.round(totals.calories)}
               target={goal.daily_calories}
               size={64}
               strokeWidth={5}
             />
             <MacroRing
-              label="Protein"
+              label="Proteine"
               current={Math.round(totals.protein)}
               target={Number(goal.protein_g)}
               unit="g"
             />
             <MacroRing
-              label="Carbs"
+              label="Carboidrati"
               current={Math.round(totals.carbs)}
               target={Number(goal.carbs_g)}
               unit="g"
             />
             <MacroRing
-              label="Fat"
+              label="Grassi"
               current={Math.round(totals.fat)}
               target={Number(goal.fat_g)}
               unit="g"
@@ -107,7 +114,7 @@ export default function Dashboard() {
         ) : (
           <div className="text-center py-8 mb-4">
             <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-              No targets set — contact your coach
+              Obiettivi non impostati — contatta il tuo coach
             </p>
           </div>
         )}
@@ -115,12 +122,12 @@ export default function Dashboard() {
         {/* Today's meals */}
         <div>
           <h2 className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
-            Today's Meals
+            Pasti di Oggi
           </h2>
 
           {logs.length === 0 ? (
             <p className="text-sm text-center py-8" style={{ color: 'var(--muted-foreground)' }}>
-              No meals logged today
+              Nessun pasto registrato oggi
             </p>
           ) : (
             <div className="flex flex-col gap-4">
@@ -130,7 +137,7 @@ export default function Dashboard() {
                 return (
                   <div key={type}>
                     <h3 className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--muted-foreground)' }}>
-                      {type}
+                      {mealTypeLabels[type] || type}
                     </h3>
                     <div className="flex flex-col gap-1">
                       {items.map((log) => (
@@ -174,7 +181,7 @@ export default function Dashboard() {
             color: 'var(--primary-foreground)',
           }}
         >
-          Log Meal
+          Aggiungi Pasto
         </Button>
       </div>
     </div>

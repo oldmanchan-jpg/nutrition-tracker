@@ -5,6 +5,15 @@ import type { Recipe } from '@/types'
 
 const categories = ['all', 'breakfast', 'lunch', 'dinner', 'snack', 'drink']
 
+const categoryLabels: Record<string, string> = {
+  all: 'Tutte',
+  breakfast: 'Colazione',
+  lunch: 'Pranzo',
+  dinner: 'Cena',
+  snack: 'Spuntino',
+  drink: 'Bevanda',
+}
+
 export default function Recipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [search, setSearch] = useState('')
@@ -36,7 +45,7 @@ export default function Recipes() {
                 color: category === cat ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
               }}
             >
-              {cat}
+              {categoryLabels[cat] || cat}
             </button>
           ))}
         </div>
@@ -49,7 +58,7 @@ export default function Recipes() {
           <MagnifyingGlass size={18} color="var(--muted-foreground)" />
           <input
             type="text"
-            placeholder="Search recipes..."
+            placeholder="Cerca ricette..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-sm"

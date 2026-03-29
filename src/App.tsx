@@ -81,16 +81,16 @@ export default function App() {
           <Route element={<AppLayout />}>
             <Route path="/dashboard" element={<Dashboard />} />
           </Route>
-          <Route element={<AppLayout title="Log Meal" />}>
+          <Route element={<AppLayout title="Aggiungi Pasto" />}>
             <Route path="/log" element={<LogMeal />} />
           </Route>
-          <Route element={<AppLayout title="Recipes" />}>
+          <Route element={<AppLayout title="Ricette" />}>
             <Route path="/recipes" element={<Recipes />} />
           </Route>
-          <Route element={<AppLayout title="Progress" />}>
+          <Route element={<AppLayout title="Progressi" />}>
             <Route path="/progress" element={<Progress />} />
           </Route>
-          <Route element={<AppLayout title="Settings" />}>
+          <Route element={<AppLayout title="Impostazioni" />}>
             <Route path="/settings" element={<Settings />} />
           </Route>
 

@@ -30,7 +30,7 @@ export default function Settings() {
         {/* Profile section */}
         <div className="mt-6 mb-6">
           <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-            Profile
+            Profilo
           </h2>
           <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
             <div className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
@@ -45,7 +45,7 @@ export default function Settings() {
         {/* Appearance */}
         <div className="mb-6">
           <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-            Appearance
+            Aspetto
           </h2>
           <button
             onClick={toggleTheme}
@@ -53,7 +53,7 @@ export default function Settings() {
             style={{ backgroundColor: 'var(--card)' }}
           >
             <span className="text-sm" style={{ color: 'var(--foreground)' }}>
-              {isDark ? 'Dark Mode' : 'Light Mode'}
+              {isDark ? 'Tema Scuro' : 'Tema Chiaro'}
             </span>
             {isDark ? (
               <Moon size={20} weight="duotone" color="var(--accent)" />
@@ -66,7 +66,7 @@ export default function Settings() {
         {/* App info */}
         <div className="mb-8">
           <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-            About
+            Info
           </h2>
           <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
             <div className="text-sm" style={{ color: 'var(--foreground)' }}>
@@ -89,7 +89,7 @@ export default function Settings() {
           }}
         >
           <SignOut size={20} weight="bold" />
-          Sign Out
+          Esci
         </Button>
       </div>
     </div>

@@ -88,14 +88,14 @@ export default function Login() {
               color: 'var(--primary-foreground)',
             }}
           >
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Accesso...' : 'Accedi'}
           </Button>
         </form>
 
         {/* Divider */}
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
-          <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>or</span>
+          <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>oppure</span>
           <div className="flex-1 h-px" style={{ backgroundColor: 'var(--border)' }} />
         </div>
 
@@ -109,7 +109,7 @@ export default function Login() {
             color: 'var(--foreground)',
           }}
         >
-          Continue with Google
+          Continua con Google
         </Button>
       </div>
     </div>

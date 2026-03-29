@@ -4,17 +4,17 @@ import { useProfile } from '@/hooks/useProfile'
 
 const clientItems = [
   { path: '/dashboard', label: 'Home', Icon: House },
-  { path: '/log', label: 'Log', Icon: Plus, primary: true },
-  { path: '/recipes', label: 'Recipes', Icon: CookingPot },
-  { path: '/progress', label: 'Progress', Icon: ChartLine },
-  { path: '/settings', label: 'Settings', Icon: GearSix },
+  { path: '/recipes', label: 'Ricette', Icon: CookingPot },
+  { path: '/log', label: '', Icon: Plus, primary: true },
+  { path: '/progress', label: 'Progressi', Icon: ChartLine },
+  { path: '/settings', label: 'Impostazioni', Icon: GearSix },
 ]
 
 const adminItems = [
   { path: '/dashboard', label: 'Home', Icon: House },
-  { path: '/log', label: 'Log', Icon: Plus, primary: true },
-  { path: '/recipes', label: 'Recipes', Icon: CookingPot },
-  { path: '/progress', label: 'Progress', Icon: ChartLine },
+  { path: '/recipes', label: 'Ricette', Icon: CookingPot },
+  { path: '/log', label: '', Icon: Plus, primary: true },
+  { path: '/progress', label: 'Progressi', Icon: ChartLine },
   { path: '/admin', label: 'Admin', Icon: GearSix },
 ]
 
@@ -37,10 +37,10 @@ export default function BottomNav() {
           >
             {primary ? (
               <div
-                className="flex items-center justify-center w-10 h-10 rounded-full"
+                className="flex items-center justify-center w-12 h-12 rounded-full -mt-3"
                 style={{ backgroundColor: 'var(--accent)' }}
               >
-                <Icon size={22} weight="bold" color="var(--primary-foreground)" />
+                <Icon size={24} weight="bold" color="var(--primary-foreground)" />
               </div>
             ) : (
               <Icon
@@ -49,12 +49,14 @@ export default function BottomNav() {
                 color={active ? 'var(--accent)' : 'var(--muted-foreground)'}
               />
             )}
-            <span
-              className="text-[10px]"
-              style={{ color: primary ? 'var(--accent)' : active ? 'var(--accent)' : 'var(--muted-foreground)' }}
-            >
-              {label}
-            </span>
+            {!primary && (
+              <span
+                className="text-[10px]"
+                style={{ color: active ? 'var(--accent)' : 'var(--muted-foreground)' }}
+              >
+                {label}
+              </span>
+            )}
           </button>
         )
       })}

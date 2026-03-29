@@ -60,7 +60,7 @@ export default function Progress() {
     }
 
     const data = Object.entries(dailyMap).map(([date, vals]) => ({
-      date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+      date: new Date(date).toLocaleDateString('it-IT', { month: 'short', day: 'numeric' }),
       ...vals,
     }))
 
@@ -95,7 +95,7 @@ export default function Progress() {
                 color: period === p ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
               }}
             >
-              {p}
+              {p === 'week' ? 'Settimana' : 'Mese'}
             </button>
           ))}
         </div>
@@ -109,7 +109,7 @@ export default function Progress() {
             {/* Calorie chart */}
             <div className="mb-6">
               <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-                Calories
+                Calorie
               </h2>
               <ResponsiveContainer width="100%" height={200}>
                 <AreaChart data={chartData}>
@@ -154,14 +154,14 @@ export default function Progress() {
             {/* Average stats */}
             <div className="mb-6">
               <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-                Daily Averages
+                Medie Giornaliere
               </h2>
               <div className="grid grid-cols-4 gap-2">
                 {[
                   { label: 'Cal', value: avg.calories, unit: '' },
-                  { label: 'Protein', value: avg.protein, unit: 'g' },
-                  { label: 'Carbs', value: avg.carbs, unit: 'g' },
-                  { label: 'Fat', value: avg.fat, unit: 'g' },
+                  { label: 'Proteine', value: avg.protein, unit: 'g' },
+                  { label: 'Carbo', value: avg.carbs, unit: 'g' },
+                  { label: 'Grassi', value: avg.fat, unit: 'g' },
                 ].map((stat) => (
                   <div key={stat.label} className="text-center py-3 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
                     <div className="font-mono text-lg font-bold" style={{ color: 'var(--foreground)' }}>
@@ -178,13 +178,13 @@ export default function Progress() {
             {/* Adherence */}
             <div className="mb-6">
               <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-                Adherence
+                Costanza
               </h2>
               <p className="text-sm" style={{ color: 'var(--foreground)' }}>
                 <span className="font-mono text-lg font-bold" style={{ color: 'var(--accent)' }}>
                   {daysLogged}
                 </span>
-                {' '}out of {totalDays} days logged
+                {' '}su {totalDays} giorni registrati
               </p>
             </div>
           </>

@@ -9,6 +9,13 @@ type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
 const mealTypes: MealType[] = ['breakfast', 'lunch', 'dinner', 'snack']
 
+const mealTypeLabels: Record<MealType, string> = {
+  breakfast: 'Colazione',
+  lunch: 'Pranzo',
+  dinner: 'Cena',
+  snack: 'Spuntino',
+}
+
 export default function LogMeal() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [search, setSearch] = useState('')
@@ -40,7 +47,7 @@ export default function LogMeal() {
   async function handleAdd(recipe: Recipe) {
     const result = await logMeal(recipe.id, servings, selectedType, recipe)
     if (result) {
-      setToast(`Added ${recipe.name}`)
+      setToast(`${recipe.name} aggiunto`)
       setExpandedId(null)
       setServings(1)
       setTimeout(() => setToast(''), 2000)
@@ -62,7 +69,7 @@ export default function LogMeal() {
                 color: selectedType === type ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
               }}
             >
-              {type}
+              {mealTypeLabels[type]}
             </button>
           ))}
         </div>
@@ -75,7 +82,7 @@ export default function LogMeal() {
           <MagnifyingGlass size={18} color="var(--muted-foreground)" />
           <input
             type="text"
-            placeholder="Search recipes..."
+            placeholder="Cerca ricette..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="flex-1 bg-transparent border-none outline-none text-sm"
@@ -127,7 +134,7 @@ export default function LogMeal() {
                   <div className="px-3 pb-3 flex flex-col gap-3" style={{ borderTop: '1px solid var(--border)' }}>
                     {/* Servings */}
                     <div className="flex items-center justify-between pt-3">
-                      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Servings</span>
+                      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>Porzioni</span>
                       <div className="flex items-center gap-3">
                         <button
                           onClick={() => setServings(Math.max(0.5, servings - 0.5))}
@@ -173,7 +180,7 @@ export default function LogMeal() {
                         color: 'var(--primary-foreground)',
                       }}
                     >
-                      Add to Log
+                      Aggiungi
                     </Button>
                   </div>
                 )}
@@ -204,7 +211,7 @@ export default function LogMeal() {
             color: 'var(--foreground)',
           }}
         >
-          Done
+          Fatto
         </Button>
       </div>
     </div>
