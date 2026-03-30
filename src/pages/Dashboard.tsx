@@ -147,7 +147,7 @@ export default function Dashboard() {
                           style={{ backgroundColor: 'var(--card)' }}
                         >
                           <span className="text-sm" style={{ color: 'var(--foreground)' }}>
-                            {log.recipes?.name ?? 'Unknown'}
+                            {log.recipes?.name ?? log.custom_foods?.name ?? 'Sconosciuto'}
                           </span>
                           <div className="flex items-center gap-3">
                             <span className="font-mono text-sm" style={{ color: 'var(--accent)' }}>

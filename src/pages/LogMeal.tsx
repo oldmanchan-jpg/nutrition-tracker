@@ -2,8 +2,8 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { MagnifyingGlass, Minus, Plus } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
-import { getRecipes, logMeal } from '@/services/nutritionService'
-import type { Recipe } from '@/types'
+import { getRecipes, logMeal, getCustomFoods, logCustomFood } from '@/services/nutritionService'
+import type { Recipe, CustomFood } from '@/types'
 
 type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack'
 
@@ -18,6 +18,7 @@ const mealTypeLabels: Record<MealType, string> = {
 
 export default function LogMeal() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
+  const [customFoods, setCustomFoods] = useState<CustomFood[]>([])
   const [search, setSearch] = useState('')
   const [selectedType, setSelectedType] = useState<MealType>('breakfast')
   const [expandedId, setExpandedId] = useState<string | null>(null)
@@ -27,6 +28,7 @@ export default function LogMeal() {
 
   useEffect(() => {
     getRecipes().then(setRecipes)
+    getCustomFoods().then(setCustomFoods)
   }, [])
 
   const filtered = recipes.filter((r) => {
@@ -89,6 +91,65 @@ export default function LogMeal() {
             style={{ color: 'var(--foreground)' }}
           />
         </div>
+
+        {/* Custom foods */}
+        {customFoods.length > 0 && (
+          <>
+            <h3 className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--muted-foreground)' }}>
+              I tuoi alimenti
+            </h3>
+            <div className="flex flex-col gap-2 mb-4">
+              {customFoods
+                .filter((f) => f.name.toLowerCase().includes(search.toLowerCase()))
+                .map((food) => (
+                  <div
+                    key={food.id}
+                    className="flex items-center justify-between p-3 rounded-lg"
+                    style={{ backgroundColor: 'var(--card)' }}
+                  >
+                    <div>
+                      <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+                        {food.name}
+                      </span>
+                      <div className="flex gap-3 mt-1">
+                        <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                          P: {food.protein_g}g
+                        </span>
+                        <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                          C: {food.carbs_g}g
+                        </span>
+                        <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                          F: {food.fat_g}g
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-sm" style={{ color: 'var(--accent)' }}>
+                        {food.calories} cal
+                      </span>
+                      <button
+                        onClick={async () => {
+                          const result = await logCustomFood(food, 1, selectedType)
+                          if (result) {
+                            setToast(`${food.name} aggiunto`)
+                            setTimeout(() => setToast(''), 2000)
+                          }
+                        }}
+                        className="px-3 py-1 rounded-lg text-xs font-semibold border-none cursor-pointer"
+                        style={{ backgroundColor: 'var(--accent)', color: 'var(--primary-foreground)' }}
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+                ))}
+            </div>
+
+            <h3 className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--muted-foreground)' }}>
+              Ricette
+            </h3>
+          </>
+        )}
 
         {/* Recipe list */}
         <div className="flex flex-col gap-2">

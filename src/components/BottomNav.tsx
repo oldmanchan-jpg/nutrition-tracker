@@ -1,11 +1,13 @@
+import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { House, Plus, CookingPot, ChartLine, GearSix } from '@phosphor-icons/react'
 import { useProfile } from '@/hooks/useProfile'
+import AddBottomSheet from '@/components/AddBottomSheet'
 
 const clientItems = [
   { path: '/dashboard', label: 'Home', Icon: House },
   { path: '/recipes', label: 'Ricette', Icon: CookingPot },
-  { path: '/log', label: '', Icon: Plus, primary: true },
+  { path: '__add__', label: '', Icon: Plus, primary: true },
   { path: '/progress', label: 'Progressi', Icon: ChartLine },
   { path: '/settings', label: 'Impostazioni', Icon: GearSix },
 ]
@@ -13,7 +15,7 @@ const clientItems = [
 const adminItems = [
   { path: '/dashboard', label: 'Home', Icon: House },
   { path: '/recipes', label: 'Ricette', Icon: CookingPot },
-  { path: '/log', label: '', Icon: Plus, primary: true },
+  { path: '__add__', label: '', Icon: Plus, primary: true },
   { path: '/progress', label: 'Progressi', Icon: ChartLine },
   { path: '/admin', label: 'Admin', Icon: GearSix },
 ]
@@ -22,44 +24,48 @@ export default function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
   const { profile } = useProfile()
+  const [sheetOpen, setSheetOpen] = useState(false)
 
   const items = profile?.role === 'admin' ? adminItems : clientItems
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 h-[72px] flex items-center justify-around px-2 pb-safe" style={{ backgroundColor: 'var(--background)', borderTop: '1px solid var(--border)' }}>
-      {items.map(({ path, label, Icon, primary }) => {
-        const active = location.pathname === path
-        return (
-          <button
-            key={path}
-            onClick={() => navigate(path)}
-            className="flex flex-col items-center justify-center gap-0.5 w-16 h-full bg-transparent border-none cursor-pointer"
-          >
-            {primary ? (
-              <div
-                className="flex items-center justify-center w-12 h-12 rounded-full -mt-3"
-                style={{ backgroundColor: 'var(--accent)' }}
-              >
-                <Icon size={24} weight="bold" color="var(--primary-foreground)" />
-              </div>
-            ) : (
-              <Icon
-                size={22}
-                weight={active ? 'fill' : 'regular'}
-                color={active ? 'var(--accent)' : 'var(--muted-foreground)'}
-              />
-            )}
-            {!primary && (
-              <span
-                className="text-[10px]"
-                style={{ color: active ? 'var(--accent)' : 'var(--muted-foreground)' }}
-              >
-                {label}
-              </span>
-            )}
-          </button>
-        )
-      })}
-    </nav>
+    <>
+      <nav className="fixed bottom-0 left-0 right-0 z-50 h-[72px] flex items-center justify-around px-2 pb-safe" style={{ backgroundColor: 'var(--background)', borderTop: '1px solid var(--border)' }}>
+        {items.map(({ path, label, Icon, primary }) => {
+          const active = location.pathname === path
+          return (
+            <button
+              key={path}
+              onClick={() => primary ? setSheetOpen(true) : navigate(path)}
+              className="flex flex-col items-center justify-center gap-0.5 w-16 h-full bg-transparent border-none cursor-pointer"
+            >
+              {primary ? (
+                <div
+                  className="flex items-center justify-center w-12 h-12 rounded-full -mt-3"
+                  style={{ backgroundColor: 'var(--accent)' }}
+                >
+                  <Icon size={24} weight="bold" color="var(--primary-foreground)" />
+                </div>
+              ) : (
+                <Icon
+                  size={22}
+                  weight={active ? 'fill' : 'regular'}
+                  color={active ? 'var(--accent)' : 'var(--muted-foreground)'}
+                />
+              )}
+              {!primary && (
+                <span
+                  className="text-[10px]"
+                  style={{ color: active ? 'var(--accent)' : 'var(--muted-foreground)' }}
+                >
+                  {label}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </nav>
+      <AddBottomSheet open={sheetOpen} onClose={() => setSheetOpen(false)} />
+    </>
   )
 }

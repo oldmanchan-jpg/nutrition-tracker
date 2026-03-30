@@ -10,6 +10,7 @@ import BottomNav from '@/components/BottomNav'
 import Login from '@/pages/Login'
 import Dashboard from '@/pages/Dashboard'
 import LogMeal from '@/pages/LogMeal'
+import LogCustomFood from '@/pages/LogCustomFood'
 import Recipes from '@/pages/Recipes'
 import Progress from '@/pages/Progress'
 import Admin from '@/pages/Admin'
@@ -92,6 +93,15 @@ function AppLayout({ title }: { title?: string }) {
   )
 }
 
+function MinimalLayout({ title }: { title?: string }) {
+  return (
+    <>
+      <TopBar title={title} />
+      <Outlet />
+    </>
+  )
+}
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -107,6 +117,9 @@ export default function App() {
             </Route>
             <Route element={<AppLayout title="Aggiungi Pasto" />}>
               <Route path="/log" element={<LogMeal />} />
+            </Route>
+            <Route element={<MinimalLayout title="Alimento Personalizzato" />}>
+              <Route path="/log/custom" element={<LogCustomFood />} />
             </Route>
             <Route element={<AppLayout title="Ricette" />}>
               <Route path="/recipes" element={<Recipes />} />

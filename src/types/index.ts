@@ -11,6 +11,17 @@ export interface Recipe {
   created_at: string
 }
 
+export interface CustomFood {
+  id: string
+  user_id: string
+  name: string
+  calories: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+  created_at: string
+}
+
 export interface NutritionGoal {
   id: string
   client_id: string
@@ -26,7 +37,8 @@ export interface NutritionGoal {
 export interface NutritionLog {
   id: string
   user_id: string
-  recipe_id: string
+  recipe_id: string | null
+  custom_food_id: string | null
   servings: number
   logged_at: string
   meal_type: 'breakfast' | 'lunch' | 'dinner' | 'snack'
@@ -38,6 +50,7 @@ export interface NutritionLog {
   created_at: string
   // Joined
   recipes?: Recipe
+  custom_foods?: CustomFood
 }
 
 export interface Profile {

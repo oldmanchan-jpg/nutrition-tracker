@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase'
-import type { Recipe, NutritionGoal, NutritionLog, Profile } from '@/types'
+import type { Recipe, NutritionGoal, NutritionLog, Profile, CustomFood } from '@/types'
 
 // ─── Recipes ────────────────────────────────────────────
 
@@ -168,7 +168,7 @@ export async function getTodaysLogs(): Promise<NutritionLog[]> {
 
     const { data, error } = await supabase
       .from('nutrition_logs')
-      .select('*, recipes(*)')
+      .select('*, recipes(*), custom_foods(*)')
       .eq('user_id', user.id)
       .eq('logged_at', today)
       .order('created_at', { ascending: true })
@@ -188,7 +188,7 @@ export async function getLogsByDateRange(start: string, end: string): Promise<Nu
 
     const { data, error } = await supabase
       .from('nutrition_logs')
-      .select('*, recipes(*)')
+      .select('*, recipes(*), custom_foods(*)')
       .eq('user_id', user.id)
       .gte('logged_at', start)
       .lte('logged_at', end)
@@ -224,7 +224,7 @@ export async function logMeal(
         carbs_g: Math.round(recipe.carbs_g * servings * 10) / 10,
         fat_g: Math.round(recipe.fat_g * servings * 10) / 10,
       })
-      .select('*, recipes(*)')
+      .select('*, recipes(*), custom_foods(*)')
       .single()
 
     if (error) throw error
@@ -247,6 +247,84 @@ export async function deleteLog(id: string): Promise<boolean> {
   } catch (err) {
     console.error('deleteLog failed:', err)
     return false
+  }
+}
+
+// ─── Custom Foods ───────────────────────────────────────
+
+export async function createCustomFood(food: {
+  name: string
+  calories: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}): Promise<CustomFood | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data, error } = await supabase
+      .from('custom_foods')
+      .insert({ ...food, user_id: user.id })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (err) {
+    console.error('createCustomFood failed:', err)
+    return null
+  }
+}
+
+export async function getCustomFoods(): Promise<CustomFood[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    const { data, error } = await supabase
+      .from('custom_foods')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('name')
+
+    if (error) throw error
+    return data ?? []
+  } catch (err) {
+    console.error('getCustomFoods failed:', err)
+    return []
+  }
+}
+
+export async function logCustomFood(
+  customFood: CustomFood,
+  servings: number,
+  mealType: 'breakfast' | 'lunch' | 'dinner' | 'snack'
+): Promise<NutritionLog | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data, error } = await supabase
+      .from('nutrition_logs')
+      .insert({
+        user_id: user.id,
+        custom_food_id: customFood.id,
+        servings,
+        meal_type: mealType,
+        calories: Math.round(customFood.calories * servings),
+        protein_g: Math.round(Number(customFood.protein_g) * servings * 10) / 10,
+        carbs_g: Math.round(Number(customFood.carbs_g) * servings * 10) / 10,
+        fat_g: Math.round(Number(customFood.fat_g) * servings * 10) / 10,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (err) {
+    console.error('logCustomFood failed:', err)
+    return null
   }
 }
 
@@ -346,7 +424,7 @@ export async function getClientLogs(clientId: string, days: number): Promise<Nut
 
     const { data, error } = await supabase
       .from('nutrition_logs')
-      .select('*, recipes(*)')
+      .select('*, recipes(*), custom_foods(*)')
       .eq('user_id', clientId)
       .gte('logged_at', startStr)
       .order('logged_at', { ascending: false })
