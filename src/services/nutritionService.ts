@@ -250,6 +250,76 @@ export async function deleteLog(id: string): Promise<boolean> {
   }
 }
 
+// ─── Nutrition Onboarding ────────────────────────────────
+
+export async function saveNutritionProfile(data: {
+  gender: string
+  age: number
+  height_cm: number
+  weight_kg: number
+  goal_weight_kg: number
+  activity_level: string
+  goal_type: string
+  dietary_restrictions: string[]
+  meals_per_day: number
+}): Promise<boolean> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return false
+
+    const { error } = await supabase
+      .from('profiles')
+      .update({
+        ...data,
+        nutrition_onboarding_complete: true,
+      })
+      .eq('id', user.id)
+
+    if (error) throw error
+    return true
+  } catch (err) {
+    console.error('saveNutritionProfile failed:', err)
+    return false
+  }
+}
+
+export async function setNutritionGoals(goals: {
+  daily_calories: number
+  protein_g: number
+  carbs_g: number
+  fat_g: number
+}): Promise<NutritionGoal | null> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    // Deactivate old goals
+    await supabase
+      .from('nutrition_goals')
+      .update({ active: false })
+      .eq('client_id', user.id)
+      .eq('active', true)
+
+    // Insert new goal
+    const { data, error } = await supabase
+      .from('nutrition_goals')
+      .insert({
+        client_id: user.id,
+        ...goals,
+        set_by: user.id,
+        active: true,
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (err) {
+    console.error('setNutritionGoals failed:', err)
+    return null
+  }
+}
+
 // ─── Clients (Admin) ────────────────────────────────────
 
 export async function getClients(): Promise<Profile[]> {

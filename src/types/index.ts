@@ -47,4 +47,15 @@ export interface Profile {
   role: 'admin' | 'client' | 'inactive'
   training_level: string | null
   onboarding_complete: boolean
+  // Nutrition onboarding fields
+  age?: number | null
+  height_cm?: number | null
+  weight_kg?: number | null
+  gender?: 'male' | 'female' | null
+  goal_weight_kg?: number | null
+  activity_level?: 'sedentary' | 'lightly_active' | 'moderately_active' | 'active' | 'very_active' | null
+  goal_type?: 'lose' | 'maintain' | 'gain' | null
+  dietary_restrictions?: string[]
+  meals_per_day?: number | null
+  nutrition_onboarding_complete?: boolean
 }
