@@ -14,14 +14,51 @@ const categoryLabels: Record<string, string> = {
   drink: 'Bevanda',
 }
 
+function RecipeCard({ recipe }: { recipe: Recipe }) {
+  const initial = recipe.name.charAt(0).toUpperCase()
+
+  return (
+    <div className="rounded-xl overflow-hidden" style={{ backgroundColor: 'var(--card)' }}>
+      {/* Image or placeholder */}
+      {recipe.image_url ? (
+        <img
+          src={recipe.image_url}
+          alt={recipe.name}
+          className="w-full object-cover"
+          style={{ height: 120 }}
+          loading="lazy"
+        />
+      ) : (
+        <div
+          className="w-full flex items-center justify-center text-2xl font-bold"
+          style={{ height: 120, backgroundColor: 'var(--muted)', color: 'var(--muted-foreground)' }}
+        >
+          {initial}
+        </div>
+      )}
+      <div className="p-2.5">
+        <div className="text-xs font-semibold leading-tight mb-1 line-clamp-2" style={{ color: 'var(--foreground)' }}>
+          {recipe.name}
+        </div>
+        <div className="font-mono text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
+          {recipe.calories} kcal · P {recipe.protein_g}g · C {recipe.carbs_g}g · F {recipe.fat_g}g
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Recipes() {
   const [recipes, setRecipes] = useState<Recipe[]>([])
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('all')
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    getRecipes().then(setRecipes)
+    getRecipes().then((r) => {
+      setRecipes(r)
+      setLoading(false)
+    })
   }, [])
 
   const filtered = recipes.filter((r) => {
@@ -29,6 +66,16 @@ export default function Recipes() {
     const matchesCategory = category === 'all' || r.category === category
     return matchesSearch && matchesCategory
   })
+
+  // Group by category for section headers (when showing all)
+  const showGrouped = category === 'all' && !search
+  const groupedByCategory = showGrouped
+    ? (['breakfast', 'lunch', 'dinner', 'snack', 'drink'] as const).map((cat) => ({
+        category: cat,
+        label: categoryLabels[cat],
+        items: filtered.filter((r) => r.category === cat),
+      })).filter((g) => g.items.length > 0)
+    : []
 
   return (
     <div className="content-area flex flex-col">
@@ -39,7 +86,7 @@ export default function Recipes() {
             <button
               key={cat}
               onClick={() => setCategory(cat)}
-              className="px-3 py-1.5 rounded-full text-xs font-semibold capitalize border-none cursor-pointer whitespace-nowrap shrink-0"
+              className="px-3 py-1.5 rounded-full text-xs font-semibold border-none cursor-pointer whitespace-nowrap shrink-0"
               style={{
                 backgroundColor: category === cat ? 'var(--accent)' : 'var(--card)',
                 color: category === cat ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
@@ -66,54 +113,46 @@ export default function Recipes() {
           />
         </div>
 
-        {/* Recipe list */}
-        <div className="flex flex-col gap-2 pb-4">
-          {filtered.map((recipe) => (
-            <div
-              key={recipe.id}
-              className="rounded-lg overflow-hidden"
-              style={{ backgroundColor: 'var(--card)' }}
-            >
-              <button
-                onClick={() => setExpandedId(expandedId === recipe.id ? null : recipe.id)}
-                className="w-full p-3 bg-transparent border-none cursor-pointer text-left"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
-                    {recipe.name}
-                  </span>
+        {loading ? (
+          <div className="grid grid-cols-2 gap-3 pb-4">
+            {[...Array(6)].map((_, i) => (
+              <div key={i} className="rounded-xl overflow-hidden">
+                <div className="skeleton" style={{ height: 120 }} />
+                <div className="p-2.5" style={{ backgroundColor: 'var(--card)' }}>
+                  <div className="skeleton h-3 w-3/4 mb-1" />
+                  <div className="skeleton h-2.5 w-full" />
                 </div>
-                {recipe.serving_size && (
-                  <span className="text-[10px] mt-0.5 block" style={{ color: 'var(--muted-foreground)' }}>
-                    {recipe.serving_size}
-                  </span>
-                )}
-                <div className="flex gap-3 mt-1.5">
-                  <span className="font-mono text-xs" style={{ color: 'var(--accent)' }}>
-                    {recipe.calories} cal
-                  </span>
-                  <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-                    P: {recipe.protein_g}g
-                  </span>
-                  <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-                    C: {recipe.carbs_g}g
-                  </span>
-                  <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-                    F: {recipe.fat_g}g
-                  </span>
+              </div>
+            ))}
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+              Nessuna ricetta trovata
+            </p>
+          </div>
+        ) : showGrouped ? (
+          <div className="pb-4">
+            {groupedByCategory.map((group) => (
+              <div key={group.category} className="mb-6">
+                <h3 className="text-[10px] font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
+                  {group.label}
+                </h3>
+                <div className="grid grid-cols-2 gap-3">
+                  {group.items.map((recipe) => (
+                    <RecipeCard key={recipe.id} recipe={recipe} />
+                  ))}
                 </div>
-              </button>
-
-              {expandedId === recipe.id && recipe.instructions && (
-                <div className="px-3 pb-3" style={{ borderTop: '1px solid var(--border)' }}>
-                  <p className="text-xs mt-2" style={{ color: 'var(--muted-foreground)' }}>
-                    {recipe.instructions}
-                  </p>
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 gap-3 pb-4">
+            {filtered.map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )

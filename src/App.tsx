@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useLocation } from 'react-router-dom'
+import { motion, AnimatePresence } from 'framer-motion'
 import { supabase } from '@/lib/supabase'
 import type { Session } from '@supabase/supabase-js'
 import { useProfile } from '@/hooks/useProfile'
@@ -83,11 +84,28 @@ function AdminRoute() {
   return <Outlet />
 }
 
+function PageTransition({ children }: { children: React.ReactNode }) {
+  const location = useLocation()
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
+      >
+        {children}
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
 function AppLayout({ title }: { title?: string }) {
   return (
     <>
       <TopBar title={title} />
-      <Outlet />
+      <PageTransition><Outlet /></PageTransition>
       <BottomNav />
     </>
   )
@@ -97,7 +115,7 @@ function MinimalLayout({ title }: { title?: string }) {
   return (
     <>
       <TopBar title={title} />
-      <Outlet />
+      <PageTransition><Outlet /></PageTransition>
     </>
   )
 }

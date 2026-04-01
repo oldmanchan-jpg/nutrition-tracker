@@ -8,6 +8,7 @@ export interface Recipe {
   fat_g: number
   serving_size: string | null
   instructions: string | null
+  image_url: string | null
   created_at: string
 }
 

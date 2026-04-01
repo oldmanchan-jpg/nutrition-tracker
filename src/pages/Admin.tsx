@@ -108,6 +108,7 @@ export default function Admin() {
         ...recipeForm,
         serving_size: recipeForm.serving_size || null,
         instructions: recipeForm.instructions || null,
+        image_url: null,
       })
       if (result) {
         setRecipes((prev) => [...prev, result])

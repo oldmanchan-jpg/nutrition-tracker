@@ -65,6 +65,9 @@
     --accent: #4ECDC4;
     --accent-foreground: #0a1a19;
     --accent-2: #7EDDD6;
+    --macro-protein: #4ECDC4;
+    --macro-carbs: #F4A261;
+    --macro-fat: #E07A8E;
     --destructive: #E05A5A;
     --border: rgba(245,240,235,0.08);
     --input: rgba(245,240,235,0.07);
@@ -93,6 +96,9 @@
     --muted-foreground: #6B6059;
     --accent: #4ECDC4;
     --accent-foreground: #0a1a19;
+    --macro-protein: #4ECDC4;
+    --macro-carbs: #F4A261;
+    --macro-fat: #E07A8E;
     --border: rgba(46,42,39,0.12);
     --input: rgba(46,42,39,0.07);
 }
@@ -153,3 +159,19 @@
 .font-mono {
   font-family: 'DM Mono', monospace !important;
 }
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--card) 25%, rgba(245,240,235,0.08) 50%, var(--card) 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+/* Hide scrollbar */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
