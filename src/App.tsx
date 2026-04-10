@@ -17,6 +17,7 @@ import Progress from '@/pages/Progress'
 import Admin from '@/pages/Admin'
 import Settings from '@/pages/Settings'
 import NutritionOnboarding from '@/pages/NutritionOnboarding'
+import ResetPassword from '@/pages/ResetPassword'
 
 function ProtectedRoute() {
   const [session, setSession] = useState<Session | null>(null)
@@ -125,6 +126,7 @@ export default function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
 
         <Route element={<ProtectedRoute />}>
           <Route element={<OnboardingGuard />}>

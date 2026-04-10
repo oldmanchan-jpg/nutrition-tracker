@@ -8,6 +8,7 @@ export default function Login() {
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resetSent, setResetSent] = useState(false)
   const navigate = useNavigate()
 
   async function handleLogin(e: React.FormEvent) {
@@ -27,6 +28,26 @@ export default function Login() {
     }
 
     navigate('/dashboard')
+  }
+
+  async function handleForgotPassword() {
+    if (!email) {
+      setError('Inserisci la tua email prima di resettare la password')
+      return
+    }
+    setLoading(true)
+    setError('')
+
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    })
+
+    if (resetError) {
+      setError(resetError.message)
+    } else {
+      setResetSent(true)
+    }
+    setLoading(false)
   }
 
   async function handleGoogleLogin() {
@@ -79,6 +100,12 @@ export default function Login() {
             </p>
           )}
 
+          {resetSent && (
+            <p className="text-sm text-center" style={{ color: 'var(--accent)' }}>
+              Email inviata! Controlla la posta per il link di reset.
+            </p>
+          )}
+
           <Button
             type="submit"
             disabled={loading}
@@ -90,6 +117,16 @@ export default function Login() {
           >
             {loading ? 'Accesso...' : 'Accedi'}
           </Button>
+
+          <button
+            type="button"
+            onClick={handleForgotPassword}
+            disabled={loading}
+            className="bg-transparent border-none cursor-pointer text-sm"
+            style={{ color: 'var(--muted-foreground)' }}
+          >
+            Password dimenticata?
+          </button>
         </form>
 
         {/* Divider */}
