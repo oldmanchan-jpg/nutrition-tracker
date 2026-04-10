@@ -32,6 +32,8 @@ export interface NutritionGoal {
   fat_g: number
   set_by: string
   active: boolean
+  day_type: 'average' | 'training' | 'rest' | null
+  protocol_type: string | null
   created_at: string
 }
 

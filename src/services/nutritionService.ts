@@ -90,12 +90,27 @@ export async function getMyGoal(): Promise<NutritionGoal | null> {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
-    const { data, error } = await supabase
+    // Try day_type = 'average' first (TKD-hybrid protocol), fall back to any active goal
+    let { data, error } = await supabase
       .from('nutrition_goals')
       .select('*')
       .eq('client_id', user.id)
       .eq('active', true)
+      .eq('day_type', 'average')
       .single()
+
+    if (error && error.code === 'PGRST116') {
+      // No 'average' row — fall back to any active goal (legacy rows without day_type)
+      const fallback = await supabase
+        .from('nutrition_goals')
+        .select('*')
+        .eq('client_id', user.id)
+        .eq('active', true)
+        .limit(1)
+        .single()
+      data = fallback.data
+      error = fallback.error
+    }
 
     if (error && error.code !== 'PGRST116') throw error
     return data
@@ -107,12 +122,25 @@ export async function getMyGoal(): Promise<NutritionGoal | null> {
 
 export async function getClientGoal(clientId: string): Promise<NutritionGoal | null> {
   try {
-    const { data, error } = await supabase
+    let { data, error } = await supabase
       .from('nutrition_goals')
       .select('*')
       .eq('client_id', clientId)
       .eq('active', true)
+      .eq('day_type', 'average')
       .single()
+
+    if (error && error.code === 'PGRST116') {
+      const fallback = await supabase
+        .from('nutrition_goals')
+        .select('*')
+        .eq('client_id', clientId)
+        .eq('active', true)
+        .limit(1)
+        .single()
+      data = fallback.data
+      error = fallback.error
+    }
 
     if (error && error.code !== 'PGRST116') throw error
     return data
