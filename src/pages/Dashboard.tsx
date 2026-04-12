@@ -163,39 +163,61 @@ export default function Dashboard() {
             </p>
           </div>
         ) : (
-          <div className="text-center py-8 mb-4">
-            <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-              Obiettivi non impostati — contatta il tuo coach
+          <div
+            className="text-center py-8 mb-4 rounded-2xl"
+            style={{ backgroundColor: 'var(--card)' }}
+          >
+            <p className="text-sm font-medium" style={{ color: 'var(--foreground)' }}>
+              Nessun obiettivo attivo
+            </p>
+            <p className="text-xs mt-2" style={{ color: 'var(--muted-foreground)' }}>
+              Calorie e macro non ancora impostati.
+            </p>
+            <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>
+              Contatta il tuo coach per ricevere il piano.
             </p>
           </div>
         )}
 
         {/* Macro progress bars */}
         {goal && (
-          <div className="flex flex-col gap-4 mb-8">
+          <div
+            className="rounded-2xl p-4 mb-8 flex flex-col gap-5"
+            style={{ backgroundColor: 'var(--card)' }}
+          >
             {macros.map((macro) => {
               const progress = macro.target > 0 ? Math.min(macro.current / macro.target, 1) : 0
+              const remaining = Math.max(0, macro.target - macro.current)
+              const pct = macro.target > 0 ? Math.round((macro.current / macro.target) * 100) : 0
               return (
                 <div key={macro.label}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-xs font-semibold" style={{ color: macro.color }}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-sm font-semibold" style={{ color: macro.color }}>
                       {macro.label}
                     </span>
-                    <span className="font-mono text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                      {macro.current}g / {macro.target}g
+                    <span className="font-mono text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
+                      {macro.current}g <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>/ {macro.target}g</span>
                     </span>
                   </div>
                   <div
-                    className="h-2 rounded-full w-full"
+                    className="h-3 rounded-full w-full"
                     style={{ backgroundColor: 'var(--border)' }}
                   >
                     <div
-                      className="h-2 rounded-full transition-all duration-500"
+                      className="h-3 rounded-full transition-all duration-500"
                       style={{
                         width: `${progress * 100}%`,
                         backgroundColor: macro.color,
                       }}
                     />
+                  </div>
+                  <div className="flex items-center justify-between mt-1">
+                    <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                      {pct}%
+                    </span>
+                    <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                      {macro.current >= macro.target ? 'Raggiunto' : `${remaining}g rimanenti`}
+                    </span>
                   </div>
                 </div>
               )
