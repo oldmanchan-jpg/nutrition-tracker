@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { House, Plus, CookingPot, ChartLine, GearSix } from '@phosphor-icons/react'
+import { House, Plus, ClockCounterClockwise, ChartLine, GearSix } from '@phosphor-icons/react'
 import { useProfile } from '@/hooks/useProfile'
 import AddBottomSheet from '@/components/AddBottomSheet'
 
 const clientItems = [
   { path: '/dashboard', label: 'Home', Icon: House },
-  { path: '/recipes', label: 'Ricette', Icon: CookingPot },
+  { path: '/history', label: 'Cronologia', Icon: ClockCounterClockwise },
   { path: '__add__', label: '', Icon: Plus, primary: true },
   { path: '/progress', label: 'Progressi', Icon: ChartLine },
   { path: '/settings', label: 'Impostazioni', Icon: GearSix },
@@ -14,7 +14,7 @@ const clientItems = [
 
 const adminItems = [
   { path: '/dashboard', label: 'Home', Icon: House },
-  { path: '/recipes', label: 'Ricette', Icon: CookingPot },
+  { path: '/history', label: 'Cronologia', Icon: ClockCounterClockwise },
   { path: '__add__', label: '', Icon: Plus, primary: true },
   { path: '/progress', label: 'Progressi', Icon: ChartLine },
   { path: '/admin', label: 'Admin', Icon: GearSix },

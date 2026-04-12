@@ -120,6 +120,25 @@ export async function getMyGoal(): Promise<NutritionGoal | null> {
   }
 }
 
+export async function getMyGoals(): Promise<NutritionGoal[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    const { data, error } = await supabase
+      .from('nutrition_goals')
+      .select('*')
+      .eq('client_id', user.id)
+      .eq('active', true)
+
+    if (error) throw error
+    return data ?? []
+  } catch (err) {
+    console.error('getMyGoals failed:', err)
+    return []
+  }
+}
+
 export async function getClientGoal(clientId: string): Promise<NutritionGoal | null> {
   try {
     let { data, error } = await supabase
@@ -275,6 +294,46 @@ export async function deleteLog(id: string): Promise<boolean> {
   } catch (err) {
     console.error('deleteLog failed:', err)
     return false
+  }
+}
+
+export async function getLogsByDate(date: string): Promise<NutritionLog[]> {
+  try {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return []
+
+    const { data, error } = await supabase
+      .from('nutrition_logs')
+      .select('*, recipes(*), custom_foods(*)')
+      .eq('user_id', user.id)
+      .eq('logged_at', date)
+      .order('created_at', { ascending: true })
+
+    if (error) throw error
+    return data ?? []
+  } catch (err) {
+    console.error('getLogsByDate failed:', err)
+    return []
+  }
+}
+
+export async function updateLog(
+  id: string,
+  updates: { servings?: number; meal_type?: string; calories?: number; protein_g?: number; carbs_g?: number; fat_g?: number }
+): Promise<NutritionLog | null> {
+  try {
+    const { data, error } = await supabase
+      .from('nutrition_logs')
+      .update(updates)
+      .eq('id', id)
+      .select('*, recipes(*), custom_foods(*)')
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (err) {
+    console.error('updateLog failed:', err)
+    return null
   }
 }
 

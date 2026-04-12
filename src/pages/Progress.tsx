@@ -7,6 +7,7 @@ import {
   ResponsiveContainer,
   ReferenceLine,
   Tooltip,
+  Cell,
 } from 'recharts'
 import { getLogsByDateRange, getMyGoal } from '@/services/nutritionService'
 import type { NutritionGoal } from '@/types'
@@ -14,6 +15,15 @@ import type { NutritionGoal } from '@/types'
 type Period = 'week' | 'month'
 
 const dayLabelsIt = ['Dom', 'Lun', 'Mar', 'Mer', 'Gio', 'Ven', 'Sab']
+
+function barColor(calories: number, target: number): string {
+  if (calories === 0) return 'var(--border)'
+  if (target <= 0) return 'var(--accent)'
+  const ratio = calories / target
+  if (ratio > 1) return 'var(--destructive)'       // Over target
+  if (ratio < 0.8) return 'var(--muted-foreground)' // Under by >20%
+  return 'var(--accent)'                            // Within 10–20%
+}
 
 export default function Progress() {
   const [period, setPeriod] = useState<Period>('week')
@@ -75,16 +85,15 @@ export default function Progress() {
 
   const daysLogged = chartData.filter((d) => d.calories > 0).length
   const totalDays = chartData.length
-  const adherencePct = totalDays > 0 ? Math.round((daysLogged / totalDays) * 100) : 0
 
-  // Current streak
+  // Streak
   let streak = 0
   for (let i = chartData.length - 1; i >= 0; i--) {
     if (chartData[i].calories > 0) streak++
     else break
   }
 
-  // Daily averages (over logged days only)
+  // Daily averages (logged days only)
   const loggedDays = chartData.filter((d) => d.calories > 0)
   const avg = loggedDays.length > 0
     ? {
@@ -95,7 +104,24 @@ export default function Progress() {
       }
     : { calories: 0, protein: 0, carbs: 0, fat: 0 }
 
+  // Compliance: days within ±10% of calorie target
+  const calTarget = goal?.daily_calories ?? 0
+  const compliantDays = calTarget > 0
+    ? loggedDays.filter((d) => {
+        const ratio = d.calories / calTarget
+        return ratio >= 0.9 && ratio <= 1.1
+      }).length
+    : 0
+  const compliancePct = loggedDays.length > 0 ? Math.round((compliantDays / loggedDays.length) * 100) : 0
+
   const macroTotal = avg.protein + avg.carbs + avg.fat
+
+  // Macro vs target
+  const macroComparison = goal ? [
+    { label: 'Proteine', avg: avg.protein, target: Number(goal.protein_g), color: 'var(--macro-protein)' },
+    { label: 'Carboidrati', avg: avg.carbs, target: Number(goal.carbs_g), color: 'var(--macro-carbs)' },
+    { label: 'Grassi', avg: avg.fat, target: Number(goal.fat_g), color: 'var(--macro-fat)' },
+  ] : []
 
   return (
     <div className="content-area flex flex-col">
@@ -132,41 +158,41 @@ export default function Progress() {
           </div>
         ) : (
           <>
-            {/* Adherence stats */}
+            {/* Stats row */}
             <div className="grid grid-cols-3 gap-2 mb-6">
               <div className="text-center py-3 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
                 <div className="font-mono text-lg font-bold" style={{ color: 'var(--foreground)' }}>
                   {daysLogged}/{totalDays}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                  Giorni registrati
+                  Giorni
                 </div>
               </div>
               <div className="text-center py-3 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
                 <div
                   className="font-mono text-lg font-bold"
-                  style={{ color: adherencePct >= 80 ? 'var(--accent)' : adherencePct < 50 ? 'var(--destructive)' : 'var(--foreground)' }}
+                  style={{ color: compliancePct >= 70 ? 'var(--accent)' : compliancePct < 40 ? 'var(--destructive)' : 'var(--foreground)' }}
                 >
-                  {adherencePct}%
+                  {compliancePct}%
                 </div>
                 <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                  Aderenza
+                  In target
                 </div>
               </div>
               <div className="text-center py-3 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
-                <div className="font-mono text-lg font-bold" style={{ color: 'var(--foreground)' }}>
+                <div className="font-mono text-lg font-bold" style={{ color: streak >= 3 ? 'var(--accent)' : 'var(--foreground)' }}>
                   {streak}
                 </div>
                 <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                  Striscia attuale
+                  Striscia
                 </div>
               </div>
             </div>
 
-            {/* Calorie trend bar chart */}
+            {/* Calorie chart with color-coded bars */}
             <div className="mb-6">
               <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-                Calorie
+                Calorie Giornaliere
               </h2>
               <ResponsiveContainer width="100%" height={200}>
                 <BarChart data={chartData} barCategoryGap="20%">
@@ -203,93 +229,126 @@ export default function Progress() {
                     labelFormatter={(label) => label}
                     formatter={(value) => [`${Number(value).toLocaleString()} kcal`, 'Calorie']}
                   />
-                  <Bar
-                    dataKey="calories"
-                    fill="var(--accent)"
-                    radius={[4, 4, 0, 0]}
-                  />
+                  <Bar dataKey="calories" radius={[4, 4, 0, 0]}>
+                    {chartData.map((entry, index) => (
+                      <Cell key={index} fill={barColor(entry.calories, calTarget)} />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              {/* Legend */}
+              <div className="flex gap-4 mt-2">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--accent)' }} />
+                  <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>In target</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--destructive)' }} />
+                  <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>Sopra</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: 'var(--muted-foreground)' }} />
+                  <span className="text-[10px]" style={{ color: 'var(--muted-foreground)' }}>Sotto 20%+</span>
+                </div>
+              </div>
             </div>
 
-            {/* Macro breakdown */}
-            <div className="mb-6">
+            {/* Trend summary */}
+            <div
+              className="rounded-xl p-4 mb-6"
+              style={{ backgroundColor: 'var(--card)' }}
+            >
               <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-                Macro — Media Giornaliera
+                {period === 'week' ? 'Questa Settimana' : 'Questo Mese'}
               </h2>
-
-              {/* Stacked macro bar */}
-              {macroTotal > 0 && (
-                <div className="flex h-3 rounded-full overflow-hidden mb-3" style={{ backgroundColor: 'var(--border)' }}>
-                  <div
-                    className="h-full transition-all duration-500"
+              <div className="flex items-baseline gap-2 mb-1">
+                <span className="font-mono text-2xl font-bold" style={{ color: 'var(--foreground)' }}>
+                  {avg.calories.toLocaleString()}
+                </span>
+                <span className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                  kcal/giorno (media)
+                </span>
+              </div>
+              {calTarget > 0 && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                    Obiettivo: {calTarget.toLocaleString()} kcal/giorno
+                  </span>
+                  <span
+                    className="font-mono text-xs font-semibold"
                     style={{
-                      width: `${(avg.protein / macroTotal) * 100}%`,
-                      backgroundColor: 'var(--macro-protein)',
+                      color: Math.abs(avg.calories - calTarget) / calTarget <= 0.1
+                        ? 'var(--accent)'
+                        : avg.calories > calTarget ? 'var(--destructive)' : 'var(--muted-foreground)',
                     }}
-                  />
-                  <div
-                    className="h-full transition-all duration-500"
-                    style={{
-                      width: `${(avg.carbs / macroTotal) * 100}%`,
-                      backgroundColor: 'var(--macro-carbs)',
-                    }}
-                  />
-                  <div
-                    className="h-full transition-all duration-500"
-                    style={{
-                      width: `${(avg.fat / macroTotal) * 100}%`,
-                      backgroundColor: 'var(--macro-fat)',
-                    }}
-                  />
+                  >
+                    {avg.calories >= calTarget ? '+' : ''}{avg.calories - calTarget} kcal
+                  </span>
                 </div>
               )}
-
-              <div className="flex gap-4">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--macro-protein)' }} />
-                  <span className="font-mono text-xs" style={{ color: 'var(--foreground)' }}>
-                    P {avg.protein}g
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--macro-carbs)' }} />
-                  <span className="font-mono text-xs" style={{ color: 'var(--foreground)' }}>
-                    C {avg.carbs}g
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: 'var(--macro-fat)' }} />
-                  <span className="font-mono text-xs" style={{ color: 'var(--foreground)' }}>
-                    F {avg.fat}g
-                  </span>
-                </div>
-              </div>
             </div>
 
-            {/* Daily averages */}
-            <div className="mb-6">
-              <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
-                Medie Giornaliere
-              </h2>
-              <div className="grid grid-cols-4 gap-2">
-                {[
-                  { label: 'Cal', value: avg.calories, unit: '', color: 'var(--accent)' },
-                  { label: 'Proteine', value: avg.protein, unit: 'g', color: 'var(--macro-protein)' },
-                  { label: 'Carbo', value: avg.carbs, unit: 'g', color: 'var(--macro-carbs)' },
-                  { label: 'Grassi', value: avg.fat, unit: 'g', color: 'var(--macro-fat)' },
-                ].map((stat) => (
-                  <div key={stat.label} className="text-center py-3 rounded-lg" style={{ backgroundColor: 'var(--card)' }}>
-                    <div className="font-mono text-lg font-bold" style={{ color: stat.color }}>
-                      {stat.value}{stat.unit}
-                    </div>
-                    <div className="text-[10px] uppercase tracking-wider mt-0.5" style={{ color: 'var(--muted-foreground)' }}>
-                      {stat.label}
-                    </div>
-                  </div>
-                ))}
+            {/* Macro vs target */}
+            {macroComparison.length > 0 && (
+              <div className="mb-6">
+                <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
+                  Macro — Media vs Obiettivo
+                </h2>
+                <div className="flex flex-col gap-3">
+                  {macroComparison.map((m) => {
+                    const pct = m.target > 0 ? Math.round((m.avg / m.target) * 100) : 0
+                    const progress = m.target > 0 ? Math.min(m.avg / m.target, 1) : 0
+                    return (
+                      <div key={m.label}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-xs font-semibold" style={{ color: m.color }}>{m.label}</span>
+                          <span className="font-mono text-xs" style={{ color: 'var(--foreground)' }}>
+                            {m.avg}g <span style={{ color: 'var(--muted-foreground)' }}>/ {m.target}g</span>
+                            <span className="ml-2" style={{ color: pct >= 90 && pct <= 110 ? 'var(--accent)' : 'var(--muted-foreground)' }}>
+                              {pct}%
+                            </span>
+                          </span>
+                        </div>
+                        <div className="h-2 rounded-full w-full" style={{ backgroundColor: 'var(--border)' }}>
+                          <div
+                            className="h-2 rounded-full transition-all duration-500"
+                            style={{ width: `${progress * 100}%`, backgroundColor: m.color }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Stacked macro bar */}
+            {macroTotal > 0 && (
+              <div className="mb-6">
+                <h2 className="text-xs font-semibold tracking-widest uppercase mb-3" style={{ color: 'var(--muted-foreground)' }}>
+                  Distribuzione Macro
+                </h2>
+                <div className="flex h-3 rounded-full overflow-hidden mb-3" style={{ backgroundColor: 'var(--border)' }}>
+                  <div className="h-full" style={{ width: `${(avg.protein / macroTotal) * 100}%`, backgroundColor: 'var(--macro-protein)' }} />
+                  <div className="h-full" style={{ width: `${(avg.carbs / macroTotal) * 100}%`, backgroundColor: 'var(--macro-carbs)' }} />
+                  <div className="h-full" style={{ width: `${(avg.fat / macroTotal) * 100}%`, backgroundColor: 'var(--macro-fat)' }} />
+                </div>
+                <div className="flex gap-4">
+                  {[
+                    { label: 'Proteine', value: avg.protein, color: 'var(--macro-protein)' },
+                    { label: 'Carbo', value: avg.carbs, color: 'var(--macro-carbs)' },
+                    { label: 'Grassi', value: avg.fat, color: 'var(--macro-fat)' },
+                  ].map((m) => (
+                    <div key={m.label} className="flex items-center gap-1.5">
+                      <div className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: m.color }} />
+                      <span className="font-mono text-xs" style={{ color: 'var(--foreground)' }}>
+                        {m.label} {m.value}g
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

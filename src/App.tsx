@@ -14,6 +14,7 @@ import LogMeal from '@/pages/LogMeal'
 import LogCustomFood from '@/pages/LogCustomFood'
 import Recipes from '@/pages/Recipes'
 import Progress from '@/pages/Progress'
+import History from '@/pages/History'
 import Admin from '@/pages/Admin'
 import Settings from '@/pages/Settings'
 import NutritionOnboarding from '@/pages/NutritionOnboarding'
@@ -146,6 +147,9 @@ export default function App() {
             </Route>
             <Route element={<AppLayout title="Progressi" />}>
               <Route path="/progress" element={<Progress />} />
+            </Route>
+            <Route element={<AppLayout title="Cronologia" />}>
+              <Route path="/history" element={<History />} />
             </Route>
             <Route element={<AppLayout title="Impostazioni" />}>
               <Route path="/settings" element={<Settings />} />

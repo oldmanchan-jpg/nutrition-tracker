@@ -1,24 +1,37 @@
 import { useState, useEffect } from 'react'
-import { getTodaysLogs, getMyGoal, deleteLog } from '@/services/nutritionService'
+import { useNavigate } from 'react-router-dom'
+import { getTodaysLogs, getMyGoals, deleteLog } from '@/services/nutritionService'
 import type { NutritionLog, NutritionGoal } from '@/types'
-import { Trash } from '@phosphor-icons/react'
+import { Trash, Plus } from '@phosphor-icons/react'
+
+type DayType = 'training' | 'rest'
+
+const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack'] as const
+const mealLabels: Record<string, string> = {
+  breakfast: 'Colazione',
+  lunch: 'Pranzo',
+  dinner: 'Cena',
+  snack: 'Spuntini',
+}
 
 export default function Dashboard() {
   const [logs, setLogs] = useState<NutritionLog[]>([])
-  const [goal, setGoal] = useState<NutritionGoal | null>(null)
+  const [goals, setGoals] = useState<NutritionGoal[]>([])
+  const [dayType, setDayType] = useState<DayType>('training')
   const [loading, setLoading] = useState(true)
+  const navigate = useNavigate()
 
   useEffect(() => {
     loadData()
   }, [])
 
   async function loadData() {
-    const [logsData, goalData] = await Promise.all([
+    const [logsData, goalsData] = await Promise.all([
       getTodaysLogs(),
-      getMyGoal(),
+      getMyGoals(),
     ])
     setLogs(logsData)
-    setGoal(goalData)
+    setGoals(goalsData)
     setLoading(false)
   }
 
@@ -28,6 +41,14 @@ export default function Dashboard() {
       setLogs(logs.filter((l) => l.id !== id))
     }
   }
+
+  // Pick goal for current day type
+  const goal = goals.find((g) => g.day_type === dayType)
+    ?? goals.find((g) => g.day_type === 'average')
+    ?? goals[0]
+    ?? null
+
+  const hasDayTypes = goals.some((g) => g.day_type === 'training') && goals.some((g) => g.day_type === 'rest')
 
   const totals = logs.reduce(
     (acc, log) => ({
@@ -40,20 +61,11 @@ export default function Dashboard() {
   )
 
   const grouped = logs.reduce<Record<string, NutritionLog[]>>((acc, log) => {
-    const key = log.meal_type || 'other'
+    const key = log.meal_type || 'snack'
     if (!acc[key]) acc[key] = []
     acc[key].push(log)
     return acc
   }, {})
-
-  const mealOrder = ['breakfast', 'lunch', 'dinner', 'snack']
-
-  const mealTypeLabels: Record<string, string> = {
-    breakfast: 'Colazione',
-    lunch: 'Pranzo',
-    dinner: 'Cena',
-    snack: 'Spuntino',
-  }
 
   const today = new Date().toLocaleDateString('it-IT', {
     weekday: 'long',
@@ -64,47 +76,53 @@ export default function Dashboard() {
   if (loading) {
     return (
       <div className="content-area flex flex-col px-4">
-        {/* Skeleton */}
         <div className="mt-4 mb-6 skeleton h-4 w-40" />
         <div className="flex justify-center mb-8">
-          <div className="skeleton rounded-full" style={{ width: 180, height: 180 }} />
+          <div className="skeleton rounded-full" style={{ width: 200, height: 200 }} />
         </div>
-        <div className="flex flex-col gap-4 mb-6">
-          <div className="skeleton h-12 w-full" />
-          <div className="skeleton h-12 w-full" />
-          <div className="skeleton h-12 w-full" />
+        <div className="flex gap-4 justify-center mb-6">
+          <div className="skeleton h-16 w-20" />
+          <div className="skeleton h-16 w-20" />
+          <div className="skeleton h-16 w-20" />
+        </div>
+        <div className="flex flex-col gap-3">
+          <div className="skeleton h-14 w-full" />
+          <div className="skeleton h-14 w-full" />
         </div>
       </div>
     )
   }
 
-  // Calorie ring calculations
+  // Calorie ring
   const calTarget = goal?.daily_calories ?? 0
   const calCurrent = Math.round(totals.calories)
   const calProgress = calTarget > 0 ? Math.min(calCurrent / calTarget, 1) : 0
   const remaining = Math.max(0, calTarget - calCurrent)
-  const ringSize = 180
-  const ringStroke = 12
+  const ringSize = 200
+  const ringStroke = 14
   const ringRadius = (ringSize - ringStroke) / 2
   const ringCircumference = 2 * Math.PI * ringRadius
   const ringOffset = ringCircumference - calProgress * ringCircumference
 
-  // Macro bar data
+  // Macro data
   const macros = [
     {
       label: 'Proteine',
+      short: 'P',
       current: Math.round(totals.protein),
       target: goal ? Number(goal.protein_g) : 0,
       color: 'var(--macro-protein)',
     },
     {
       label: 'Carboidrati',
+      short: 'C',
       current: Math.round(totals.carbs),
       target: goal ? Number(goal.carbs_g) : 0,
       color: 'var(--macro-carbs)',
     },
     {
       label: 'Grassi',
+      short: 'F',
       current: Math.round(totals.fat),
       target: goal ? Number(goal.fat_g) : 0,
       color: 'var(--macro-fat)',
@@ -114,17 +132,38 @@ export default function Dashboard() {
   return (
     <div className="content-area flex flex-col">
       <div className="flex-1 overflow-y-auto px-4 pb-6">
-        {/* Date */}
-        <p className="text-sm mt-4 mb-6" style={{ color: 'var(--muted-foreground)' }}>
-          {today}
-        </p>
+        {/* Date + day type toggle */}
+        <div className="flex items-center justify-between mt-4 mb-5">
+          <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
+            {today}
+          </p>
+          {hasDayTypes && (
+            <div
+              className="flex rounded-full p-0.5"
+              style={{ backgroundColor: 'var(--card)' }}
+            >
+              {(['training', 'rest'] as DayType[]).map((dt) => (
+                <button
+                  key={dt}
+                  onClick={() => setDayType(dt)}
+                  className="px-3 py-1 rounded-full text-[11px] font-semibold border-none cursor-pointer transition-colors"
+                  style={{
+                    backgroundColor: dayType === dt ? 'var(--accent)' : 'transparent',
+                    color: dayType === dt ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
+                  }}
+                >
+                  {dt === 'training' ? 'Allenamento' : 'Riposo'}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
 
-        {/* Calorie donut ring */}
+        {/* Calorie ring */}
         {goal ? (
-          <div className="flex flex-col items-center mb-8">
+          <div className="flex flex-col items-center mb-6">
             <div className="relative" style={{ width: ringSize, height: ringSize }}>
               <svg width={ringSize} height={ringSize} className="-rotate-90">
-                {/* Track */}
                 <circle
                   cx={ringSize / 2}
                   cy={ringSize / 2}
@@ -133,13 +172,12 @@ export default function Dashboard() {
                   stroke="var(--border)"
                   strokeWidth={ringStroke}
                 />
-                {/* Progress */}
                 <circle
                   cx={ringSize / 2}
                   cy={ringSize / 2}
                   r={ringRadius}
                   fill="none"
-                  stroke="var(--accent)"
+                  stroke={calCurrent > calTarget ? 'var(--destructive)' : 'var(--accent)'}
                   strokeWidth={ringStroke}
                   strokeDasharray={ringCircumference}
                   strokeDashoffset={ringOffset}
@@ -148,11 +186,11 @@ export default function Dashboard() {
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-mono text-3xl font-bold" style={{ color: 'var(--foreground)' }}>
+                <span className="font-mono text-4xl font-bold" style={{ color: 'var(--foreground)' }}>
                   {calCurrent.toLocaleString()}
                 </span>
-                <span className="font-mono text-xs" style={{ color: 'var(--muted-foreground)' }}>
-                  / {calTarget.toLocaleString()}
+                <span className="font-mono text-sm" style={{ color: 'var(--muted-foreground)' }}>
+                  / {calTarget.toLocaleString()} kcal
                 </span>
               </div>
             </div>
@@ -171,140 +209,119 @@ export default function Dashboard() {
               Nessun obiettivo attivo
             </p>
             <p className="text-xs mt-2" style={{ color: 'var(--muted-foreground)' }}>
-              Calorie e macro non ancora impostati.
-            </p>
-            <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)' }}>
               Contatta il tuo coach per ricevere il piano.
             </p>
           </div>
         )}
 
-        {/* Macro progress bars */}
+        {/* Macros row */}
         {goal && (
-          <div
-            className="rounded-2xl p-4 mb-8 flex flex-col gap-5"
-            style={{ backgroundColor: 'var(--card)' }}
-          >
+          <div className="flex gap-3 mb-8">
             {macros.map((macro) => {
               const progress = macro.target > 0 ? Math.min(macro.current / macro.target, 1) : 0
-              const remaining = Math.max(0, macro.target - macro.current)
-              const pct = macro.target > 0 ? Math.round((macro.current / macro.target) * 100) : 0
               return (
-                <div key={macro.label}>
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold" style={{ color: macro.color }}>
-                      {macro.label}
+                <div key={macro.label} className="flex-1">
+                  <div className="flex items-baseline gap-1 mb-1.5">
+                    <span className="font-mono text-lg font-bold" style={{ color: macro.color }}>
+                      {macro.current}
                     </span>
-                    <span className="font-mono text-sm font-semibold" style={{ color: 'var(--foreground)' }}>
-                      {macro.current}g <span style={{ color: 'var(--muted-foreground)', fontWeight: 400 }}>/ {macro.target}g</span>
+                    <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
+                      / {macro.target}g
                     </span>
                   </div>
                   <div
-                    className="h-3 rounded-full w-full"
+                    className="h-2 rounded-full w-full"
                     style={{ backgroundColor: 'var(--border)' }}
                   >
                     <div
-                      className="h-3 rounded-full transition-all duration-500"
+                      className="h-2 rounded-full transition-all duration-500"
                       style={{
                         width: `${progress * 100}%`,
                         backgroundColor: macro.color,
                       }}
                     />
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-                      {pct}%
-                    </span>
-                    <span className="font-mono text-[11px]" style={{ color: 'var(--muted-foreground)' }}>
-                      {macro.current >= macro.target ? 'Raggiunto' : `${remaining}g rimanenti`}
-                    </span>
-                  </div>
+                  <span className="text-[10px] mt-1 block" style={{ color: macro.color }}>
+                    {macro.label}
+                  </span>
                 </div>
               )
             })}
           </div>
         )}
 
-        {/* Today's meals */}
+        {/* Today's log — meal slots */}
         <div>
           <h2 className="text-xs font-semibold tracking-widest uppercase mb-4" style={{ color: 'var(--muted-foreground)' }}>
             Pasti di Oggi
           </h2>
 
-          {logs.length === 0 ? (
-            <div className="text-center py-12">
-              <div className="text-4xl mb-3">🍽️</div>
-              <p className="text-sm" style={{ color: 'var(--muted-foreground)' }}>
-                Nessun pasto registrato oggi
-              </p>
-              <p className="text-xs mt-1" style={{ color: 'var(--muted-foreground)', opacity: 0.7 }}>
-                Tocca (+) per iniziare
-              </p>
-            </div>
-          ) : (
-            <div className="flex flex-col gap-4">
-              {mealOrder.map((type) => {
-                const items = grouped[type]
-                if (!items) return null
-                return (
-                  <div key={type}>
-                    <h3 className="text-[10px] font-semibold tracking-widest uppercase mb-2" style={{ color: 'var(--muted-foreground)' }}>
-                      {mealTypeLabels[type] || type}
-                    </h3>
-                    <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-3">
+            {mealOrder.map((type) => {
+              const items = grouped[type] ?? []
+              const mealCal = items.reduce((s, l) => s + l.calories, 0)
+              return (
+                <div
+                  key={type}
+                  className="rounded-xl overflow-hidden"
+                  style={{ backgroundColor: 'var(--card)' }}
+                >
+                  {/* Meal header */}
+                  <div className="flex items-center justify-between px-3 pt-3 pb-1">
+                    <span className="text-xs font-semibold" style={{ color: 'var(--foreground)' }}>
+                      {mealLabels[type]}
+                    </span>
+                    {items.length > 0 && (
+                      <span className="font-mono text-[11px]" style={{ color: 'var(--accent)' }}>
+                        {mealCal} kcal
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Food items */}
+                  {items.length > 0 ? (
+                    <div className="px-3 pb-2">
                       {items.map((log) => {
                         const name = log.recipes?.name ?? log.custom_foods?.name ?? 'Sconosciuto'
-                        const imageUrl = log.recipes?.image_url
-                        const initial = name.charAt(0).toUpperCase()
                         return (
                           <div
                             key={log.id}
-                            className="flex items-center gap-3 py-2 px-3 rounded-lg"
-                            style={{ backgroundColor: 'var(--card)' }}
+                            className="flex items-center justify-between py-1.5"
+                            style={{ borderTop: '1px solid var(--border)' }}
                           >
-                            {/* Thumbnail or letter avatar */}
-                            {imageUrl ? (
-                              <img
-                                src={imageUrl}
-                                alt=""
-                                className="w-10 h-10 rounded-lg object-cover shrink-0"
-                              />
-                            ) : (
-                              <div
-                                className="w-10 h-10 rounded-lg flex items-center justify-center shrink-0 text-sm font-bold"
-                                style={{
-                                  backgroundColor: log.custom_foods ? 'var(--accent)' : 'var(--muted)',
-                                  color: log.custom_foods ? 'var(--primary-foreground)' : 'var(--muted-foreground)',
-                                }}
-                              >
-                                {initial}
-                              </div>
-                            )}
                             <div className="flex-1 min-w-0">
                               <span className="text-sm block truncate" style={{ color: 'var(--foreground)' }}>
                                 {name}
                               </span>
-                            </div>
-                            <div className="flex items-center gap-3 shrink-0">
-                              <span className="font-mono text-sm" style={{ color: 'var(--accent)' }}>
-                                {log.calories} cal
+                              <span className="font-mono text-[10px]" style={{ color: 'var(--muted-foreground)' }}>
+                                {log.calories} kcal · P {Number(log.protein_g).toFixed(0)}g · C {Number(log.carbs_g).toFixed(0)}g · F {Number(log.fat_g).toFixed(0)}g
                               </span>
-                              <button
-                                onClick={() => handleDelete(log.id)}
-                                className="bg-transparent border-none cursor-pointer p-1"
-                              >
-                                <Trash size={16} weight="bold" color="var(--destructive)" />
-                              </button>
                             </div>
+                            <button
+                              onClick={() => handleDelete(log.id)}
+                              className="bg-transparent border-none cursor-pointer p-1 shrink-0"
+                            >
+                              <Trash size={14} weight="bold" color="var(--destructive)" />
+                            </button>
                           </div>
                         )
                       })}
                     </div>
-                  </div>
-                )
-              })}
-            </div>
-          )}
+                  ) : (
+                    <button
+                      onClick={() => navigate('/log')}
+                      className="w-full flex items-center gap-2 px-3 pb-3 pt-1 bg-transparent border-none cursor-pointer"
+                    >
+                      <Plus size={14} weight="bold" color="var(--muted-foreground)" />
+                      <span className="text-xs" style={{ color: 'var(--muted-foreground)' }}>
+                        Aggiungi
+                      </span>
+                    </button>
+                  )}
+                </div>
+              )
+            })}
+          </div>
         </div>
       </div>
     </div>
